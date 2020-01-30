@@ -1,5 +1,5 @@
 # Advanced Machine Learning class project
 Master AIC - Université Paris Saclay
 
-This project is meant to reproduce the results obtained in the article [Temporal pattern attention for multivariate time series forecasting by Shun-Yao Shih, Fan-Keng Sun & Hung-yi Lee](https://doi.org/10.1007/s10994-019-05815-0).
+This project is meant to reproduce the results obtained in the article [Exploiting Local Feature Patterns for Unsupervised Domain Adaptation by Jun Wen, Risheng Liu, Nenggan Zheng, Qian Zheng, Zhefeng Gong, Junsong Yuan](https://arxiv.org/abs/1811.05042) (arXiv:1811.05042).
 
