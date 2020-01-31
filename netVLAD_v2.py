@@ -40,8 +40,11 @@ class NetVLAD(tf.keras.layers.Layer):
         S = self.similarities(inputs)
         R = self.residuals(inputs)
         St, Rt = tf.transpose(S), tf.transpose(R)
-        ARt = tf.math.multiply(St, Rt)
-        return [tf.keras.backend.sum(ARt, axis=1)]
+        ARtemp = tf.math.multiply(St, Rt)
+        AR = tf.keras.backend.sum(ARtemp, axis=1)
+        return [tf.keras.backend.l2_normalize(
+            AR.reshape(AR.shape[0]*AR.shape[1])
+        )]
 
 
 if __name__ == "__main__":
