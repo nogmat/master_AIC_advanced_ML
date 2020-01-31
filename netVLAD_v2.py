@@ -6,19 +6,10 @@ from __future__ import absolute_import, division, print_function, \
 import tensorflow as tf
 
 
-class Addition(tf.keras.layers.Layer):
-    def __init__(self):
-        super(Addition, self).__init__()
-
-    def call(self, inputs):
-        print(inputs.shape)
-        return tf.keras.backend.sum(inputs, keepdims=True)
-
-
 class NetVLAD(tf.keras.layers.Layer):
 
     def __init__(self, alpha, kmeans, **kwargs):
-        self.alpha = 5000
+        self.alpha = alpha
         self.kmeans = kmeans
         super(NetVLAD, self).__init__(**kwargs)
 
