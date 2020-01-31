@@ -59,3 +59,7 @@ class netVLAD:
         S_ijkd = np.repeat(S_ijk[:, :, :, np.newaxis], F.shape[2], axis=3)
         return np.sum(np.sum(np.multiply(S_ijkd, Fc_ijkd), axis=1), axis=0)
 
+    def Vh(self, F):
+        V_dk = self.V(F)
+        Vh = V_dk.reshape((V_dk.shape[0] * V_dk.shape[1], 1))
+        return Vh / np.linalg.norm(Vh)
