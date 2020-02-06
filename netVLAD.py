@@ -22,7 +22,6 @@ class NetVLAD(tf.keras.layers.Layer):
         super(NetVLAD, self).__init__(**kwargs)
 
     def call(self, inputs):
-
         features, kmeans_centers = inputs
         _, i, j, d = features.shape
         _, k, _ = kmeans_centers.shape
@@ -52,7 +51,7 @@ class NetVLAD(tf.keras.layers.Layer):
         )
         vlad = tf.keras.backend.l2_normalize(
             self.flatten(vlad_extended))
-        return [vlad]
+        return [vlad, similarities, distance]
 
 
 if __name__ == "__main__":
