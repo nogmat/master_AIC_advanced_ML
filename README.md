@@ -6,8 +6,6 @@ This project is meant to reproduce the results obtained in the article [Exploiti
 # Links towards datasets
 We chose not to upload the datasets to github as we don't own them, please download them from their original source.
 
-Place the following in **\<root folder of this repo\>/office-31**.
-https://people.eecs.berkeley.edu/~jhoffman/domainadapt/#datasets_code
+Place the [Office-31 dataset](https://people.eecs.berkeley.edu/~jhoffman/domainadapt/#datasets_code) in **\<root folder of this repo\>/office-31**.
 
-Place the following in **\<root folder of this repo\>/office-home**.
-http://hemanthdv.org/OfficeHome-Dataset/
+Place the [Office-home dataset](http://hemanthdv.org/OfficeHome-Dataset/) in **\<root folder of this repo\>/office-home**.
