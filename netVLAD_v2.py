@@ -106,9 +106,10 @@ class SingleLayer(tf.keras.Model):
 
 if __name__ == "__main__":
 
-    import numpy as np
     features = tf.constant([[[1.0, 2.0], [3.0, 4.0]],
                             [[5.0, 6.0], [7.0, 8.0]]])
+    model = SingleLayer(NetVLAD(1))
+    print(model.predict([features]))
     # sums = tf.keras.backend.repeat_elements(
     #     features,
     #     rep=2,
@@ -126,8 +127,3 @@ if __name__ == "__main__":
     # )
     # print(sums)
     # model = SingleLayer(netVLAD)
-
-    model = tf.keras.Sequential([
-        tf.keras.layers.InputLayer(input_shape=(2, 2, 2))
-    ])
-    print(model.predict([features]))
