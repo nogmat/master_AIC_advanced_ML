@@ -1,65 +1,67 @@
+#!/bin/python
+
+from __future__ import absolute_import, division, print_function, \
+    unicode_literals
+
 import numpy as np
+import tensorflow as tf
 
 
-class netVLAD:
-    def __init__(self, kmeans, alpha=5000.0, n_cluster=32):
+class NetVLAD(tf.keras.layers.Layer):
+
+    def __init__(self, alpha, features_shape, kmeans_shape, **kwargs):
+        i, j, d = features_shape
+        k, d = kmeans_shape
         self.alpha = alpha
-        self.n_clusters = n_cluster
-        self.kmeans = kmeans
+        self.trainable = True
+        self.reshape1 = tf.keras.layers.Reshape(
+            (i, j, k, d), input_shape=(i, j*k, d))
+        self.reshape2 = tf.keras.layers.Reshape(
+            (i, j, k, d), input_shape=(i, j, k*d))
+        self.flatten = tf.keras.layers.Flatten()
+        super(NetVLAD, self).__init__(**kwargs)
 
-    def Fc(self, F):
-        """Computing difference Fc_ijkd[k]
-        input shape: F[i,j,d] 
-        output shape: Fc[i,j,k,d]
-        """
+    def call(self, inputs):
 
-        F_ijkd = np.repeat(F[:, :, np.newaxis, :], self.n_clusters, axis=2)
-
-        c_ijkd = np.repeat(
-            np.repeat(
-                self.kmeans.cluster_centers_[np.newaxis, :, :],
-                F.shape[1],
-                axis=0,
+        features, kmeans_centers = inputs
+        _, i, j, d = features.shape
+        _, k, _ = kmeans_centers.shape
+        features = tf.keras.backend.repeat_elements(
+            features,
+            rep=k,
+            axis=2)
+        features = self.reshape1(features)
+        distance = tf.math.subtract(features, kmeans_centers)
+        similarities = tf.keras.backend.softmax(
+            -self.alpha *
+            tf.keras.backend.sum(
+                tf.keras.backend.pow(distance, 2),
+                axis=3),
+            axis=-1)
+        similarities_repl = self.reshape2(
+            tf.keras.backend.repeat_elements(
+                similarities,
+                rep=d,
+                axis=3))
+        vlad_extended = tf.keras.backend.sum(
+            tf.keras.backend.sum(
+                tf.math.multiply(similarities_repl, distance),
+                axis=1
             ),
-            F.shape[0],
-            axis=0,
+            axis=1
         )
+        vlad = tf.keras.backend.l2_normalize(
+            self.flatten(vlad_extended))
+        return [vlad]
 
-        return F_ijkd - c_ijkd
 
-    def similarity(self, Fc_ijkd):
-        """Computing similarity S_ij[k]
-        input shape: F[i,j,d] 
-        output shape: S[k,i,j]
-        """
+if __name__ == "__main__":
 
-        norm_Fc_ijk = np.linalg.norm(Fc_ijkd, axis=3)
-        exp_Fc_ijk = np.exp(-self.alpha * norm_Fc_ijk)
-
-        S_ijk = np.divide(
-            exp_Fc_ijk,
-            np.repeat(
-                np.sum(exp_Fc_ijk, axis=2)[:, :, np.newaxis],
-                self.n_clusters,
-                axis=2,
-            ),
-        )
-
-        return S_ijk
-
-    def V(self, F):
-        """Computing V[d,k]
-        input shape: F[i,j,d]
-        output shape: V[d,k]
-        """
-
-        Fc_ijkd = self.Fc(F)
-        S_ijk = self.similarity(Fc_ijkd)
-
-        S_ijkd = np.repeat(S_ijk[:, :, :, np.newaxis], F.shape[2], axis=3)
-        return np.sum(np.sum(np.multiply(S_ijkd, Fc_ijkd), axis=1), axis=0)
-
-    def Vh(self, F):
-        V_dk = self.V(F)
-        Vh = V_dk.reshape((V_dk.shape[0] * V_dk.shape[1], 1))
-        return Vh / np.linalg.norm(Vh)
+    features = np.array([[[[1.0, 2.0], [3.0, 4.0]],
+                          [[5.0, 6.0], [7.0, 8.0]]]])
+    kmeans_centers = np.array([[[1.0, 1.0], [2.0, 3.0]]])
+    f = tf.keras.layers.Input(shape=(2, 2, 2))
+    k = tf.keras.layers.Input(shape=(2, 2))
+    netvlad = NetVLAD(1, (2, 2, 2), (2, 2))([f, k])
+    model = tf.keras.models.Model(inputs=[f, k], outputs=netvlad)
+    print(model.predict([features, kmeans_centers]))
