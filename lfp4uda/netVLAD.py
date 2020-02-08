@@ -6,19 +6,13 @@ from __future__ import absolute_import, division, print_function, \
 import numpy as np
 import tensorflow as tf
 
+from tensorflow.python.ops import array_ops
+
 
 class NetVLAD(tf.keras.layers.Layer):
 
-    def __init__(self, alpha, features_shape, kmeans_shape, **kwargs):
-        i, j, d = features_shape
-        k, d = kmeans_shape
+    def __init__(self, alpha, **kwargs):
         self.alpha = alpha
-        self.trainable = True
-        self.reshape1 = tf.keras.layers.Reshape(
-            (i, j, k, d), input_shape=(i, j*k, d))
-        self.reshape2 = tf.keras.layers.Reshape(
-            (i, j, k, d), input_shape=(i, j, k*d))
-        self.flatten = tf.keras.layers.Flatten()
         super(NetVLAD, self).__init__(**kwargs)
 
     def call(self, inputs):
@@ -29,7 +23,10 @@ class NetVLAD(tf.keras.layers.Layer):
             features,
             rep=k,
             axis=2)
-        features = self.reshape1(features)
+        # features = self.reshape1(features)
+        features = array_ops.reshape(
+            features,
+            (array_ops.shape(features)[0],)+(i, j, k, d))
         distance = tf.math.subtract(features, kmeans_centers)
         similarities = tf.keras.backend.softmax(
             -self.alpha *
@@ -37,11 +34,13 @@ class NetVLAD(tf.keras.layers.Layer):
                 tf.keras.backend.pow(distance, 2),
                 axis=3),
             axis=-1)
-        similarities_repl = self.reshape2(
+        similarities_repl = array_ops.reshape(
             tf.keras.backend.repeat_elements(
                 similarities,
                 rep=d,
-                axis=3))
+                axis=3),
+            (array_ops.shape(similarities)[0],)+(i, j, k, d)
+        )
         vlad_extended = tf.keras.backend.sum(
             tf.keras.backend.sum(
                 tf.math.multiply(similarities_repl, distance),
@@ -50,7 +49,9 @@ class NetVLAD(tf.keras.layers.Layer):
             axis=1
         )
         vlad = tf.keras.backend.l2_normalize(
-            self.flatten(vlad_extended))
+            array_ops.reshape(
+                vlad_extended,
+                (array_ops.shape(vlad_extended)[0],)+(k*d,)))
         return [vlad, similarities, distance]
 
 
@@ -61,6 +62,6 @@ if __name__ == "__main__":
     kmeans_centers = np.array([[[1.0, 1.0], [2.0, 3.0]]])
     f = tf.keras.layers.Input(shape=(2, 2, 2))
     k = tf.keras.layers.Input(shape=(2, 2))
-    netvlad = NetVLAD(1, (2, 2, 2), (2, 2))([f, k])
+    netvlad = NetVLAD(1)([f, k])
     model = tf.keras.models.Model(inputs=[f, k], outputs=netvlad)
     print(model.predict([features, kmeans_centers]))

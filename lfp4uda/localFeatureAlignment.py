@@ -6,6 +6,8 @@ from __future__ import absolute_import, division, print_function, \
 import numpy as np
 import tensorflow as tf
 
+from tensorflow.python.ops import array_ops
+
 
 class LocalFeatureAlignment(tf.keras.layers.Layer):
 
@@ -17,9 +19,9 @@ class LocalFeatureAlignment(tf.keras.layers.Layer):
         _, i, j, k, d = distance.shape
         _, i, j, k_ = similarities.shape
         assert(k == k_)
-        distance = tf.keras.layers.Reshape(
-            (i*j, k, d),
-            input_shape=(i, j, k, d))(distance)
+        distance = array_ops.reshape(
+            distance,
+            (array_ops.shape(distance)[0],)+(i*j, k, d))
         argmx = tf.cast(tf.keras.backend.argmax(similarities), dtype=tf.int32)
         ones = tf.cast(tf.keras.backend.ones_like(argmx), dtype=tf.int32)
         pure_range = tf.keras.backend.reshape(
