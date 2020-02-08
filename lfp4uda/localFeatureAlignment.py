@@ -9,64 +9,44 @@ import tensorflow as tf
 
 class LocalFeatureAlignment(tf.keras.layers.Layer):
 
-    def __init__(self, feature_shape, kmeans_shape, **kwargs):
-        i, j, d = feature_shape
-        k, d_ = kmeans_shape
-        assert(d == d_)
-        super(LocalFeatureAlignment, self).__init__(self)
+    def __init__(self, **kwargs):
+        super(LocalFeatureAlignment, self).__init__(self, **kwargs)
 
     def call(self, inputs):
-        distance, kmeans_centers, similarities = inputs
-        hard_assign = tf.keras.backend.argmax(
-            similarities,
-            axis=-1)
-        return [hard_assign]
+        distance, similarities = inputs
+        distance = tf.keras.layers.Reshape(
+            (distance.shape[1]*distance.shape[2],)+distance.shape[3:],
+            input_shape=distance.shape[1:])(distance)
+        argmx = tf.cast(tf.keras.backend.argmax(similarities), dtype=tf.int32)
+        ones = tf.cast(tf.keras.backend.ones_like(argmx), dtype=tf.int32)
+        pure_range = tf.keras.backend.reshape(
+            tf.range(distance.shape[1]),
+            shape=ones.shape[1:])
+        selector = tf.stack(
+            [tf.math.multiply(ones, pure_range), argmx], axis=-1)
+        return [tf.gather_nd(distance, selector, batch_dims=1), argmx]
 
 
 if __name__ == "__main__":
-    # s = tf.constant([[[1.0, 2.0], [3.0, 4.0]],
-    #                  [[5.0, 6.0], [7.0, 8.0]]])
-    # print(tf.keras.backend.argmax(s, axis=2))
-    # print(tf.keras.backend.permute_dimensions(s, pattern=(0, 2, 1)))
-
-    # features = tf.keras.layers.Input(shape=(2, 2, 2))
-    # centers = tf.keras.layers.Input(shape=(2, 2))
-    # similarities = tf.keras.layers.Input(shape=(2, 2, 2))
-    # localFeatureAlignment = LocalFeatureAlignment((2, 2, 2), (2, 2))(
-    #     [
-    #         features,
-    #         centers,
-    #         similarities
-    #     ])
-
-    # features_t = np.array([[[[1.0, 2.0], [3.0, 4.0]],
-    #                         [[5.0, 6.0], [7.0, 8.0]]]])
-    # kmeans_centers_t = np.array([[[1.0, 1.0], [2.0, 3.0]]])
-    # similarities_t = np.array([
-    #     [[[7.3105860e-01, 2.6894143e-01],
-    #       [9.9330717e-01, 6.6928510e-03]],
-    #      [[9.9987662e-01, 1.2339458e-04],
-    #       [9.9999774e-01, 2.2603242e-06]]]
-    # ])
-    # model = tf.keras.models.Model(
-    #     inputs=[features, centers, similarities],
-    #     outputs=localFeatureAlignment
-    # )
-    # print(model.predict([
-    #     features_t,
-    #     kmeans_centers_t,
-    #     similarities_t
-    # ]))
-
-    features = tf.constant(
-        [
-            [[1.0, 2.0], [3.0, 4.0]],
-            [[5.0, 6.0], [7.0, 8.0]]
-        ]
+    # Simulation of F[i][j][d] - c[k][d]
+    distance = np.array(
+        [[
+            [[[1.0, -1.0], [2.0, -2.0]], [[3.0, -3.0], [4.0, -4.0]]],
+            [[[5.0, -5.0], [6.0, -6.0]], [[7.0, -7.0], [8.0, -8.0]]]
+        ]]
     )
-    hard_assign = tf.constant(
-        [
-            [0, 0],
-            [0, 0]
-        ]
+    # Simulation of S[i][j][k]
+    similarities = np.array(
+        [[
+            [[10, 1], [1, 10]],
+            [[20, 2], [27, 3]]
+        ]]
     )
+
+    input1 = tf.keras.layers.Input(shape=(2, 2, 2, 2))
+    input2 = tf.keras.layers.Input(shape=(2, 2, 2))
+    layer = LocalFeatureAlignment()([input1, input2])
+    model = tf.keras.models.Model(inputs=[input1, input2], outputs=layer)
+    # Must return [F[i][j][d]-c[a[i][j]][d],a[i][j]]
+    # where a is the best similarities array
+    print(model.predict([distance, similarities]))
