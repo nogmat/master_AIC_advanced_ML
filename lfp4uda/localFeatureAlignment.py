@@ -14,14 +14,17 @@ class LocalFeatureAlignment(tf.keras.layers.Layer):
 
     def call(self, inputs):
         distance, similarities = inputs
+        _, i, j, k, d = distance.shape
+        _, i, j, k_ = similarities.shape
+        assert(k == k_)
         distance = tf.keras.layers.Reshape(
-            (distance.shape[1]*distance.shape[2],)+distance.shape[3:],
-            input_shape=distance.shape[1:])(distance)
+            (i*j, k, d),
+            input_shape=(i, j, k, d))(distance)
         argmx = tf.cast(tf.keras.backend.argmax(similarities), dtype=tf.int32)
         ones = tf.cast(tf.keras.backend.ones_like(argmx), dtype=tf.int32)
         pure_range = tf.keras.backend.reshape(
-            tf.range(distance.shape[1]),
-            shape=ones.shape[1:])
+            tf.range(i*j),
+            shape=(i, j))
         selector = tf.stack(
             [tf.math.multiply(ones, pure_range), argmx], axis=-1)
         return [tf.gather_nd(distance, selector, batch_dims=1), argmx]
