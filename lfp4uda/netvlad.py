@@ -55,6 +55,10 @@ class NetVLAD(tf.keras.layers.Layer):
         return [vlad, similarities, distance]
 
 
+def netVLAD(alpha, inputs):
+    return NetVLAD(alpha)(inputs)
+
+
 if __name__ == "__main__":
 
     features = np.array([[[[1.0, 2.0], [3.0, 4.0]],
@@ -62,6 +66,6 @@ if __name__ == "__main__":
     kmeans_centers = np.array([[[1.0, 1.0], [2.0, 3.0]]])
     f = tf.keras.layers.Input(shape=(2, 2, 2))
     k = tf.keras.layers.Input(shape=(2, 2))
-    netvlad = NetVLAD(1)([f, k])
+    netvlad = netVLAD(1, [f, k])
     model = tf.keras.models.Model(inputs=[f, k], outputs=netvlad)
-    print(model.predict([features, kmeans_centers]))
+    print(model([features, kmeans_centers]))

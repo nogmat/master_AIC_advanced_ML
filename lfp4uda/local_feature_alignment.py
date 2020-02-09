@@ -22,14 +22,22 @@ class LocalFeatureAlignment(tf.keras.layers.Layer):
         distance = array_ops.reshape(
             distance,
             (array_ops.shape(distance)[0],)+(i*j, k, d))
-        argmx = tf.cast(tf.keras.backend.argmax(similarities), dtype=tf.int32)
+        argmx = tf.cast(
+            array_ops.reshape(
+                tf.keras.backend.argmax(similarities),
+                (array_ops.shape(similarities)[0],)+(i*j, 1)),
+            dtype=tf.int32)
         ones = tf.cast(tf.keras.backend.ones_like(argmx), dtype=tf.int32)
-        pure_range = tf.keras.backend.reshape(
-            tf.range(i*j),
-            shape=(i, j))
-        selector = tf.stack(
-            [tf.math.multiply(ones, pure_range), argmx], axis=-1)
-        return [tf.gather_nd(distance, selector, batch_dims=1), argmx]
+        selector = tf.concat(
+            [tf.math.multiply(
+                ones,
+                tf.keras.backend.reshape(tf.range(i*j), shape=(i*j, 1))),
+             argmx], axis=-1)
+        residuals = tf.gather_nd(distance, selector, batch_dims=1)
+        aligned_residuals = tf.concat(
+            [residuals, tf.cast(argmx, dtype=tf.float32)],
+            axis=-1)
+        return [aligned_residuals]
 
 
 if __name__ == "__main__":
@@ -54,4 +62,4 @@ if __name__ == "__main__":
     model = tf.keras.models.Model(inputs=[input1, input2], outputs=layer)
     # Must return [F[i][j][d]-c[a[i][j]][d],a[i][j]]
     # where a is the best similarities array
-    print(model.predict([distance, similarities]))
+    print(model([distance, similarities], training=False))

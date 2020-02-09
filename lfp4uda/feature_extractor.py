@@ -1,20 +1,26 @@
-from keras.applications import VGG16
-from keras.models import Sequential
+#!/bin/python
+
+from __future__ import absolute_import, division, print_function, \
+    unicode_literals
+
+import numpy as np
+import tensorflow as tf
 
 
-class Feature_Extractor:
-    def __init__(self, image_size):
+class FeatureExtractor(tf.keras.layers.Layer):
 
-        self.model = Sequential()
-
-        vgg16 = VGG16(
+    def __init__(self, input_shape, **kwargs):
+        super(FeatureExtractor, self).__init__(**kwargs)
+        self.vgg16 = tf.keras.applications.VGG16(
             weights="imagenet",
             include_top=False,
-            input_shape=(image_size, image_size, 3),
+            input_shape=input_shape,
         )
         # vgg16.layers[-3] is block5_conv2
         # vgg16.layers[-2] is block5_conv3
         # vgg16.layers[-1] is block5_pool
-        for layer in vgg16.layers[:-2]:
+        for layer in self.vgg16.layers[:-2]:
             layer.trainable = False
-        self.model.add(vgg16)
+
+    def call(self, inputs):
+        return self.vgg16(inputs)
