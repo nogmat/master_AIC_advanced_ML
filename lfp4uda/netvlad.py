@@ -48,10 +48,12 @@ class NetVLAD(tf.keras.layers.Layer):
             ),
             axis=1
         )
-        vlad = tf.keras.backend.l2_normalize(
-            array_ops.reshape(
-                vlad_extended,
-                (array_ops.shape(vlad_extended)[0],)+(k*d,)))
+        vlad = tf.keras.backend.dropout(
+            tf.keras.backend.l2_normalize(
+                array_ops.reshape(
+                    vlad_extended,
+                    (array_ops.shape(vlad_extended)[0],)+(k*d,))),
+            0.5)
         return [vlad, similarities, distance]
 
 
