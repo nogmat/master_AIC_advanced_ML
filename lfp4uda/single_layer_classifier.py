@@ -24,5 +24,6 @@ if __name__ == "__main__":
 
     input_1 = tf.keras.layers.Input(shape=(4,))
     classifier = SingleLayerClassifier(2)(input_1)
-    model = tf.keras.models.Model(inputs=[input_1], outputs=classifier)
+    classifie = tf.keras.layers.Softmax()(classifier)
+    model = tf.keras.models.Model(inputs=[input_1], outputs=classifie)
     print(model([aggregated_residuals]))
