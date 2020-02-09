@@ -6,31 +6,25 @@ import tensorflow as tf
 
 
 class ClusteringLayer(Layer):
-    def __init__(self, kmeans: KMeans, *, input_shape, **kwargs):
+    def __init__(self, *, kmeans: KMeans, input_shape, **kwargs):
         super(ClusteringLayer, self).__init__(**kwargs)
 
         self.kmeans = kmeans
-        self.input_spec = InputSpec(dtype=K.floatx(), shape=input_shape)
-
-        self.reshape_in = Reshape(
-            (input_shape[0] * input_shape[1], input_shape[2]),
-            input_shape=input_shape,
-        )
-        self.reshape_out = Reshape(
-            input_shape,
-            input_shape=(input_shape[0] * input_shape[1], input_shape[2]),
-        )
+    
+    def predict_vector(self, v: tf.Tensor):
+        # Calling eval might slow down the whole layer
+        return self.kmeans.cluster_centers_[self.kmeans.predict(v.eval())]
 
     def call(self, x, **kwargs):
-        flatten_x = self.reshape_in(x)
-        flatten_y = tf.convert_to_tensor(
-            np.fromiter(
-                self.kmeans.cluster_centers_[i]
-                for i in self.kmeans.predict(flatten_x)
-            ),
-            np.float32,
+
+        input_shape = x.shape
+        flatten_x = tf.reshape(
+            x, (input_shape[0] * input_shape[1], input_shape[2])
         )
-        y = self.reshape_out(flatten_y)
+
+        flatten_y = tf.map_fn(self.predict_vector, flatten_x)
+        y = tf.reshape(flatten_y, input_shape)
+
         return [x, y]
 
     def compute_output_shape(self, input_shape):
