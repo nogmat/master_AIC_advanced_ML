@@ -58,5 +58,5 @@ class NetVLAD(tf.keras.layers.Layer):
         return [vlad, similarities, distance]
 
 
-def netVLAD(alpha, inputs):
-    return NetVLAD(alpha)(inputs)
+def netVLAD(alpha, kmeans_centers, inputs):
+    return NetVLAD(alpha, kmeans_centers)(inputs)
