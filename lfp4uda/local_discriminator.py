@@ -20,17 +20,3 @@ class LocalDiscriminator(tf.keras.layers.Layer):
         output = self.dense_2(output)
         output = self.dense_3(output)
         return [output]
-
-
-if __name__ == "__main__":
-
-    input_ = tf.keras.layers.Input(shape=(2, 2, 3))
-    dense = LocalDiscriminator(2048, 4096)(input_)
-    model = tf.keras.models.Model(inputs=[input_], outputs=dense)
-
-    aligned_residuals = np.array([[[1., -1., 0.],
-                                   [4., -4., 1.],
-                                   [5., -5., 0.],
-                                   [7., -7., 0.]]])
-
-    print(model([aligned_residuals]))

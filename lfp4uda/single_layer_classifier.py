@@ -15,15 +15,3 @@ class SingleLayerClassifier(tf.keras.layers.Layer):
 
     def call(self, inputs):
         return self.dense(inputs)
-
-
-if __name__ == "__main__":
-
-    aggregated_residuals = np.array(
-        [[0.6064591,  0.7948939, -0.01324965, -0.01324965]])
-
-    input_1 = tf.keras.layers.Input(shape=(4,))
-    classifier = SingleLayerClassifier(2)(input_1)
-    classifie = tf.keras.layers.Softmax()(classifier)
-    model = tf.keras.models.Model(inputs=[input_1], outputs=classifie)
-    print(model([aggregated_residuals]))
