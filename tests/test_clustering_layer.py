@@ -1,38 +1,44 @@
 from lfp4uda.clustering_layer import ClusteringLayer
 import numpy as np
 import pytest
-from sklearn.cluster import KMeans
 import tensorflow as tf
+from tensorflow.contrib.factorization import KMeansClustering
+
+tf.get_logger().setLevel('ERROR')
 
 
 class TestClusteringLayer:
     def test_call(self):
 
-        x_init = np.random.random((100, 4))
-        kmeans = KMeans(n_clusters=32)
-        kmeans.fit(x_init)
-
-        x = np.random.random((2, 3, 4))
-
-        y_expected = np.reshape(
-            np.array(
-                [
-                    kmeans.cluster_centers_[i]
-                    for i in kmeans.predict(np.reshape(x, (6, 4)))
-                ]
-            ),
-            (2, 3, 4),
+        x_init = tf.convert_to_tensor(
+            np.random.random((100, 4)), dtype=tf.float32
+        )
+        kmeans = KMeansClustering(32)
+        kmeans.train(
+            lambda: tf.compat.v1.train.limit_epochs(x_init, num_epochs=1)
         )
 
-        sess = tf.Session()
-        with sess.as_default():
+        x = tf.convert_to_tensor(np.random.random((2, 3, 4)), dtype=tf.float32)
 
-            [x_out, y_out] = ClusteringLayer(
-                kmeans=kmeans, input_shape=(2, 3, 4)
-            )(tf.convert_to_tensor(x))
+        y_expected = tf.convert_to_tensor(
+            np.reshape(
+                np.array(
+                    [
+                        kmeans.predict(lambda v: v)
+                        for v in np.reshape(x, (6, 4))
+                    ]
+                ),
+                (2, 3, 4),
+            ),
+            dtype=tf.float32,
+        )
 
-            assert np.array_equal(x, x_out)
-            assert np.array_equal(y_expected, y_out)
+        x_out, y_out = ClusteringLayer(kmeans=kmeans, input_shape=(2, 3, 4))(x)
+
+        with tf.Session() as sess:
+
+            assert sess.run(tf.reduce_all(tf.equal(x, x_out)))
+            assert sess.run(tf.reduce_all(tf.equal(y_expected, y_out)))
 
 
 TestClusteringLayer().test_call()
