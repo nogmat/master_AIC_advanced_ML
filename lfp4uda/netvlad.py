@@ -17,7 +17,7 @@ class NetVLAD(tf.keras.layers.Layer):
             trainable=False)
 
     def call(self, inputs):
-        features, kmeans_centers = inputs
+        features, kmeans_centers = inputs, self.centers
         _, i, j, d = features.shape
         _, k, _ = kmeans_centers.shape
         features = tf.keras.backend.repeat_elements(
@@ -56,7 +56,3 @@ class NetVLAD(tf.keras.layers.Layer):
                     (array_ops.shape(vlad_extended)[0],)+(k*d,))),
             0.5)
         return [vlad, similarities, distance]
-
-
-def netVLAD(alpha, kmeans_centers, inputs):
-    return NetVLAD(alpha, kmeans_centers)(inputs)
