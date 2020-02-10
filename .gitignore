@@ -1,3 +1,5 @@
 .vscode/
+.pytest_cache/
 __pycache__/
-
+office-31/
+office-home/
