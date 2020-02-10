@@ -1,8 +1,5 @@
 #!/bin/python
 
-from __future__ import absolute_import, division, print_function, \
-    unicode_literals
-
 import numpy as np
 import tensorflow as tf
 
@@ -61,17 +58,5 @@ class NetVLAD(tf.keras.layers.Layer):
         return [vlad, similarities, distance]
 
 
-def netVLAD(alpha, inputs):
-    return NetVLAD(alpha)(inputs)
-
-
-if __name__ == "__main__":
-
-    features = np.array([[[[1.0, 2.0], [3.0, 4.0]],
-                          [[5.0, 6.0], [7.0, 8.0]]]])
-    kmeans_centers = np.array([[[1.0, 1.0], [2.0, 3.0]]])
-    f = tf.keras.layers.Input(shape=(2, 2, 2))
-    k = tf.keras.layers.Input(shape=(2, 2))
-    netvlad = netVLAD(1, [f, k])
-    model = tf.keras.models.Model(inputs=[f, k], outputs=netvlad)
-    print(model([features, kmeans_centers]))
+def netVLAD(alpha, kmeans_centers, inputs):
+    return NetVLAD(alpha, kmeans_centers)(inputs)
