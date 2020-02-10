@@ -13,7 +13,6 @@ class LocalDiscriminator(tf.keras.layers.Layer):
         super(LocalDiscriminator, self).__init__(**kwargs)
         self.dense_1 = tf.keras.layers.Dense(nunits_1)
         self.dense_2 = tf.keras.layers.Dense(nunits_2)
-        self.flatten = tf.keras.layers.Flatten()
         self.dense_3 = tf.keras.layers.Dense(1)
 
     def call(self, inputs):
