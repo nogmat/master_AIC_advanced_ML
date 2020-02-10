@@ -11,9 +11,13 @@ from tensorflow.python.ops import array_ops
 
 class NetVLAD(tf.keras.layers.Layer):
 
-    def __init__(self, alpha, **kwargs):
+    def __init__(self, alpha, kmeans_centers, **kwargs):
         self.alpha = alpha
         super(NetVLAD, self).__init__(**kwargs)
+        self.centers = self.add_weight(
+            shape=kmeans_centers.shape,
+            initializer=tf.keras.initializers.Constant(value=kmeans_centers),
+            trainable=False)
 
     def call(self, inputs):
         features, kmeans_centers = inputs
