@@ -5,37 +5,69 @@ from holistic_discriminator import HolisticDiscriminator
 from local_discriminator import LocalDiscriminator
 from single_layer_classifier import SingleLayerClassifier
 from office_31_preprocessing import Office31
+import numpy as np
+from sklearn.cluster import KMeans
 import tensorflow as tf
 from tensorflow.python.data.ops.dataset_ops import MapDataset
+
+IMG_WIDTH = 256
+IMG_HEIGHT = 256
+BATCH_SIZE = 32
 
 
 class WenModel:
 
     def __init__(self, source: MapDataset, target: MapDataset):
 
-        # Init
-
-        # Source list of tensors
-        xs = source.map(lambda a, b: a)
-        ys = source.map(lambda a, b: b)
+        # Initialize cluster centroids with k means
+        image_batch, _ = next(iter(source))
 
         feature_extractor = FeatureExtractor()
-        input_0 = tf.keras.layers.Input(shape=(256, 256, 3))
+
+        input_0 = tf.keras.layers.Input(shape=(IMG_HEIGHT, IMG_WIDTH, 3))
         model_0 = tf.keras.models.Model(
             inputs=[input_0], outputs=feature_extractor(input_0))
+        features = model_0(image_batch)
 
-        kmeans = tf.compat.v1.estimator.experimental.KMeans(num_clusters=32)
-        kmeans.train(model_0(xs))
-        centroids = kmeans.cluster_centers()
-        print("Tvb")
-        # netvlad = NetVLAD(0.01, centroids)
-        # single_layer_classifier = SingleLayerCLassifer()
+        features_np = tf.keras.backend.reshape(
+            features,
+            shape=(np.prod(features.shape[:3]), features.shape[3])
+        ).numpy()
 
-        # softmax = tf.keras.layers.Softmax()
-        # holistic_discriminator = HolisticDiscriminator(768, 1536)
+        kmeans = KMeans(n_clusters=32)
+        kmeans.fit(features_np)
+        centroids = kmeans.cluster_centers_
 
-        # feature_alignment = LocalFeatureAlignment()
-        # local_discriminator = LocalDiscriminator(2048, 4096)
+        # Pass centroids to NetVLAD
+        netvlad = NetVLAD(0.01, centroids)
+
+        # Define layers after NetVLAD
+        single_layer_classifier = SingleLayerClassifier(31)
+
+        softmax = tf.keras.layers.Softmax()
+        holistic_discriminator = HolisticDiscriminator(768, 1536)
+
+        feature_alignment = LocalFeatureAlignment()
+        local_discriminator = LocalDiscriminator(2048, 4096)
+
+        # Step 1 : Classifier training
+        image_input_1 = tf.keras.layers.Input(shape=(256, 256, 3))
+        layer1_1 = feature_extractor(image_input_1)
+        layer1_2, _, _ = netvlad(layer1_1)
+        layer1_3 = single_layer_classifier(layer1_2)
+        layer1_4 = softmax(layer1_3)
+        model_step_1 = tf.keras.models.Model(
+            inputs=[image_input_1], outputs=layer1_4)
+
+        adam = tf.keras.optimizers.Adam(learning_rate=0.01)
+        model_step_1.compile(loss='categorical_crossentropy', optimizer='adam')
+        model_step_1.fit(source, steps_per_epoch=np.ceil(
+            tf.shape(source)[0]/BATCH_SIZE))
+
+        print("tvb")
+        
+        # Step 2 : Source fine tuning
+        # Step 3 : Domain adaptation
 
 
 if __name__ == "__main__":

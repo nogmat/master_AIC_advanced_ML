@@ -7,6 +7,7 @@ import tensorflow as tf
 
 IMG_WIDTH = 256
 IMG_HEIGHT = 256
+BATCH_SIZE = 32
 
 
 class OfficeHomeFolders(Enum):
@@ -40,6 +41,29 @@ class OfficeHome:
         img = self.decode_img(img)
         return img, label
 
+    def prepare_for_training(self, ds, cache=True, shuffle_buffer_size=1000):
+        # This is a small dataset, only load it once, and keep it in memory.
+        # use `.cache(filename)` to cache preprocessing work for datasets that
+        # don't fit in memory.
+        if cache:
+            if isinstance(cache, str):
+                ds = ds.cache(cache)
+            else:
+                ds = ds.cache()
+
+        ds = ds.shuffle(buffer_size=shuffle_buffer_size)
+
+        # Repeat forever
+        ds = ds.repeat()
+
+        ds = ds.batch(BATCH_SIZE)
+
+        # `prefetch` lets the dataset fetch batches in the background while the
+        # model is training.
+        ds = ds.prefetch(buffer_size=100)
+
+        return ds
+
     def import_folder(self, folder=OfficeHomeFolders.All):
 
         if folder == OfficeHomeFolders.All:
@@ -68,8 +92,10 @@ class OfficeHome:
         )
 
         datasets = [
-            tf.data.Dataset.list_files(f"{folders[i]}/*/*").map(
-                lambda path: self.process_path(path, all_class_names[i])
+            self.prepare_for_training(
+                tf.data.Dataset.list_files(f"{folders[i]}/*/*").map(
+                    lambda path: self.process_path(path, all_class_names[i])
+                )
             )
             for i in range(len(folders))
         ]
