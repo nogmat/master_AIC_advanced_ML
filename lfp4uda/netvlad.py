@@ -24,7 +24,6 @@ class NetVLAD(tf.keras.layers.Layer):
             features,
             rep=k,
             axis=2)
-        # features = self.reshape1(features)
         features = array_ops.reshape(
             features,
             (array_ops.shape(features)[0],)+(i, j, k, d))

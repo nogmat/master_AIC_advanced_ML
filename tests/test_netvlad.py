@@ -1,4 +1,4 @@
-from lfp4uda.netvlad import netVLAD
+from lfp4uda.netvlad import NetVLAD
 import numpy as np
 import pytest
 import tensorflow as tf
