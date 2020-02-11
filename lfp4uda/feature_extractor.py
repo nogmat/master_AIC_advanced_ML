@@ -9,12 +9,11 @@ import tensorflow as tf
 
 class FeatureExtractor(tf.keras.layers.Layer):
 
-    def __init__(self, input_shape, **kwargs):
+    def __init__(self, **kwargs):
         super(FeatureExtractor, self).__init__(**kwargs)
         self.vgg16 = tf.keras.applications.VGG16(
             weights="imagenet",
-            include_top=False,
-            input_shape=input_shape,
+            include_top=False
         )
         # vgg16.layers[-3] is block5_conv2
         # vgg16.layers[-2] is block5_conv3
