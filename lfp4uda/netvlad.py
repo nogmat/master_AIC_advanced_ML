@@ -19,7 +19,7 @@ class NetVLAD(tf.keras.layers.Layer):
     def call(self, inputs):
         features, kmeans_centers = inputs, self.centers
         _, i, j, d = features.shape
-        _, k, _ = kmeans_centers.shape
+        k, _ = kmeans_centers.shape
         features = tf.keras.backend.repeat_elements(
             features,
             rep=k,
@@ -32,7 +32,7 @@ class NetVLAD(tf.keras.layers.Layer):
             -self.alpha *
             tf.keras.backend.sum(
                 tf.keras.backend.pow(distance, 2),
-                axis=3),
+                axis=-1),
             axis=-1)
         similarities_repl = array_ops.reshape(
             tf.keras.backend.repeat_elements(
