@@ -49,26 +49,26 @@ class OfficeHome:
                     pathlib.Path(
                         f"{os.path.dirname(os.path.realpath(__file__))}/../office-home/{member.value}"
                     )
-                    for member in OfficeHomeFolders.__members__.values()
+                    for member in OfficeHomeFolders.__members__.values() if member.value != "All"
                 ]
             )
 
-            all_class_names = np.array(
-                [[item.name for item in f.glob("*")]
-                 for f in folders]
+        else:
+            folders = np.array(
+                [
+                    pathlib.Path(
+                        f"{os.path.dirname(os.path.realpath(__file__))}/../office-home/{folder.value}"
+                    )
+                ]
             )
 
-        else:
-            folders = np.array([folder.value])
-            all_class_names = np.array([[
-                item.name
-                for item in pathlib.Path(
-                    f"{os.path.dirname(os.path.realpath(__file__))}/../office-home/{folder.value}"
-                ).glob("*")
-            ]])
+        all_class_names = np.array(
+            [[item.name for item in f.glob("*")]
+             for f in folders]
+        )
 
         datasets = [
-            tf.data.Dataset.list_files(f"{os.path.dirname(os.path.realpath(__file__))}/../office-home/{folders[i]}/*/*").map(
+            tf.data.Dataset.list_files(f"{folders[i]}/*/*").map(
                 lambda path: self.process_path(path, all_class_names[i])
             )
             for i in range(len(folders))

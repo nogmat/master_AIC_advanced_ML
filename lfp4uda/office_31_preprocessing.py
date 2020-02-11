@@ -48,26 +48,27 @@ class Office31:
                     pathlib.Path(
                         f"{os.path.dirname(os.path.realpath(__file__))}/../office-31/{member.value}/images"
                     )
-                    for member in Office31Folders.__members__.values()
+                    for member in Office31Folders.__members__.values() if member.value != "All"
                 ]
             )
 
-            all_class_names = np.array(
-                [[item.name for item in f.glob("*")]
-                 for f in folders]
+        else:
+
+            folders = np.array(
+                [
+                    pathlib.Path(
+                        f"{os.path.dirname(os.path.realpath(__file__))}/../office-31/{folder.value}/images"
+                    )
+                ]
             )
 
-        else:
-            folders = np.array([folder.value])
-            all_class_names = np.array([[
-                item.name
-                for item in pathlib.Path(
-                    f"{os.path.dirname(os.path.realpath(__file__))}/../office-31/{folder.value}/images"
-                ).glob("*")
-            ]])
+        all_class_names = np.array(
+            [[item.name for item in f.glob("*")]
+             for f in folders]
+        )
 
         datasets = [
-            tf.data.Dataset.list_files(f"{os.path.dirname(os.path.realpath(__file__))}/../office-31/{folders[i]}/images/*/*").map(
+            tf.data.Dataset.list_files(f"{folders[i]}/*/*").map(
                 lambda path: self.process_path(path, all_class_names[i])
             )
             for i in range(len(folders))
