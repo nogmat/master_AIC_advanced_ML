@@ -18,8 +18,12 @@ class FeatureExtractor(tf.keras.layers.Layer):
         # vgg16.layers[-3] is block5_conv2
         # vgg16.layers[-2] is block5_conv3
         # vgg16.layers[-1] is block5_pool
-        for layer in self.vgg16.layers[:-2]:
+        for layer in self.vgg16.layers[:]:
             layer.trainable = False
+
+    def set_trainable(self, trainable=True):
+        for layer in self.vgg16.layers[-2:]:
+            layer.trainable = trainable
 
     def call(self, inputs):
         return self.vgg16(inputs)
