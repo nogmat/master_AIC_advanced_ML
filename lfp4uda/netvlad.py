@@ -16,6 +16,9 @@ class NetVLAD(tf.keras.layers.Layer):
             initializer=tf.keras.initializers.Constant(value=kmeans_centers),
             trainable=False)
 
+    def set_trainable(self, trainable):
+        self.centers.trainable = trainable
+
     def call(self, inputs):
         features, kmeans_centers = inputs, self.centers
         _, i, j, d = features.shape
