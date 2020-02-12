@@ -90,7 +90,6 @@ class Office31:
             [[item.name for item in f.glob("*")]
              for f in folders]
         )
-
         datasets = [
             self.prepare_for_training(
                 tf.data.Dataset.list_files(f"{folders[i]}/*/*").map(
