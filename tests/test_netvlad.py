@@ -13,7 +13,7 @@ class TestNetVLAD:
         )
         kmeans_centers = np.array([[[1.0, 1.0], [2.0, 3.0]]])
         f = tf.keras.layers.Input(shape=(2, 2, 2))
-        netvlad = NetVLAD(1, kmeans_centers)(f)
+        netvlad = NetVLAD(1, kmeans_centers, False)(f)
         model = tf.keras.models.Model(inputs=[f], outputs=netvlad)
 
         m = model([features])
