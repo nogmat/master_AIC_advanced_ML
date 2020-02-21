@@ -60,12 +60,10 @@ class WenModel:
             inputs=[image_input_1], outputs=layer1_4)
 
         adam = tf.keras.optimizers.Adam(learning_rate=0.01)
-        model_step_1.compile(loss='categorical_crossentropy', optimizer='adam')
+        model_step_1.compile(loss='categorical_crossentropy', optimizer=adam)
         model_step_1.fit(source, steps_per_epoch=np.ceil(
             tf.shape(source)[0]/BATCH_SIZE))
-
-        print("tvb")
-        
+                
         # Step 2 : Source fine tuning
         # Step 3 : Domain adaptation
 
