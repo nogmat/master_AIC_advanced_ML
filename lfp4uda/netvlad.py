@@ -8,8 +8,9 @@ from tensorflow.python.ops import array_ops
 
 class NetVLAD(tf.keras.layers.Layer):
 
-    def __init__(self, alpha, kmeans_centers, trainable, **kwargs):
-        self.alpha = alpha
+    def __init__(self, decay, decay_loss, kmeans_centers, trainable, **kwargs):
+        self.decay = decay
+        self.decay_loss = decay_loss
         super(NetVLAD, self).__init__(**kwargs)
         self.centers = self.add_weight(
             shape=kmeans_centers.shape,
@@ -29,7 +30,13 @@ class NetVLAD(tf.keras.layers.Layer):
             (array_ops.shape(features)[0],)+(i, j, k, d))
         distance = tf.math.subtract(features, kmeans_centers)
         similarities = tf.keras.backend.softmax(
-            -self.alpha *
+            -self.decay *
+            tf.keras.backend.sum(
+                tf.keras.backend.pow(distance, 2),
+                axis=-1),
+            axis=-1)
+        similarities_loss = tf.keras.backend.softmax(
+            -self.decay_loss *
             tf.keras.backend.sum(
                 tf.keras.backend.pow(distance, 2),
                 axis=-1),
@@ -54,4 +61,4 @@ class NetVLAD(tf.keras.layers.Layer):
                     vlad_extended,
                     (array_ops.shape(vlad_extended)[0],)+(k*d,))),
             0.5)
-        return [vlad, similarities, distance]
+        return [vlad, similarities_loss, distance]
